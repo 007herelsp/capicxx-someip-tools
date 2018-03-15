@@ -37,7 +37,7 @@ define org.genivi.commonapi.someip.deployment for provider Service {
     instance commonapi.examples.B.MergedInterfaceB {
         InstanceId = "commonapi.examples.B.MergedInterfaceB"      
         SomeIpInstanceID = 22136
-        SomeIpUnicastAddress = "192.168.0.2"
+        SomeIpUnicastAddress = "198.1.1.102"
         SomeIpReliableUnicastPort = 30499
         SomeIpUnreliableUnicastPort = 30500
     }

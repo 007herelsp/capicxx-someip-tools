@@ -11,7 +11,7 @@
 int main(int argc, char **argv) {
     std::shared_ptr<CommonAPI::Runtime> runtime = CommonAPI::Runtime::get();
     std::shared_ptr<methodSampleStubImpl> myService = std::make_shared<methodSampleStubImpl>();
-    if (runtime->registerService("local", "BMW.ATM", myService))
+    if (runtime->registerService("local", "BMW.ATM", myService, ""))
     {
         std::cout << "Service registered." << std::endl;
     }

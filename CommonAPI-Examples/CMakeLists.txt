@@ -9,11 +9,23 @@ macro (pkg_config_module_not_found_message PKG_CONFIG_MODULE)
       " Please adjust your PKG_CONFIG_PATH environment variable accordingly.")
 endmacro ()
 
+#If set, runtime paths are not added when installing shared libraries, but are added when building.
+set (CMAKE_SKIP_INSTALL_RPATH YES)
+
+#If set, runtime paths are not added when using shared libraries.
+set (CMAKE_SKIP_RPATH YES)
+
 # OS
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     set (OS "LINUX")
     set (DL_LIBRARY "dl")
 endif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Android")
+    set (OS "ANDROID")
+    set (DL_LIBRARY "dl")
+endif (${CMAKE_SYSTEM_NAME} MATCHES "Android")
+
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
     set (OS "FREEBSD")
@@ -41,11 +53,11 @@ find_package( Boost 1.54 COMPONENTS system thread log REQUIRED )
 include_directories( ${Boost_INCLUDE_DIR} )
 
 # Check for pkg-config availability
-find_package(PkgConfig REQUIRED)
-if (NOT PKG_CONFIG_FOUND)
-    message (FATAL_ERROR "\"pkg-config\" is required, but was not found!")
-endif ()
-
+### find_package(PkgConfig REQUIRED)
+### if (NOT PKG_CONFIG_FOUND)
+###     message (FATAL_ERROR "\"pkg-config\" is required, but was not found!")
+### endif ()
+### 
 if ("${USE_INSTALLED_COMMONAPI}" STREQUAL "ON")
     FIND_PACKAGE(CommonAPI REQUIRED CONFIG NO_CMAKE_PACKAGE_REGISTRY)
 else()
@@ -57,6 +69,24 @@ message("COMMONAPI_INCLUDE_DIRS: ${COMMONAPI_INCLUDE_DIRS}")
 
 find_package (CommonAPI-SomeIP 3.1.12 REQUIRED)
 find_package (vsomeip 2.7.0 REQUIRED)
+
+
+##################
+set (COMMONAPI_TEST_FIDL_PATH /home/travis/chehejia/capicxx-someip-tools/CommonAPI-Examples/fidl)
+set (COMMONAPI_SRC_GEN_DEST ${CMAKE_CURRENT_SOURCE_DIR}/src-gen)
+file(GLOB FIDL_FILES "${COMMONAPI_TEST_FIDL_PATH}/*.fidl")
+message("FIDL_FILES: ${FIDL_FILES}")
+message("xxxxxxxxxxxxx COMMONAPI_SRC_GEN_DEST: ${COMMONAPI_SRC_GEN_DEST}")
+execute_process(
+    COMMAND ${COMMONAPI_TOOL_GENERATOR} --dest ${COMMONAPI_SRC_GEN_DEST} --skel ${FIDL_FILES}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+file(GLOB FIDL_FILES "${COMMONAPI_TEST_FIDL_PATH}/*.fdepl")
+execute_process(
+    COMMAND ${COMMONAPI_SOMEIP_TOOL_GENERATOR} --dest ${COMMONAPI_SRC_GEN_DEST}  ${FIDL_FILES}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+######################
 
 include_directories (
     ${COMMONAPI_INCLUDE_DIRS}
@@ -355,7 +385,8 @@ set(PRJ_CLIENT_SRCS_A src/A/${PRJ_NAME_CLIENT_A}.cpp ${PRJ_PROXY_GEN_SRCS_A})
 set(PRJ_SERVICE_SRCS_A src/A/${PRJ_NAME_SERVICE_A}.cpp src/A/MergedInterfaceStubImplA.cpp ${PRJ_STUB_GEN_SRCS_A} ${PRJ_STUB_IMPL_SRCS_A})
 #sources B
 set(PRJ_CLIENT_SRCS_B src/B/${PRJ_NAME_CLIENT_B}.cpp ${PRJ_PROXY_GEN_SRCS_B})
-set(PRJ_SERVICE_SRCS_B src/B/${PRJ_NAME_SERVICE_B}.cpp src/B/MergedInterfaceStubImplB.cpp ${PRJ_STUB_GEN_SRCS_B} ${PRJ_STUB_IMPL_SRCS_B})
+set(PRJ_SERVICE_SRCS_B src/B/${PRJ_NAME_SERVICE_B}.cpp src/B/MergedInterfaceStubImplB.cpp 
+/home/travis/chehejia/capicxx-someip-tools/CommonAPI-Examples/src-gen/v2/commonapi/examples/C/MergedInterfaceCSomeIPProxy.cpp ${PRJ_STUB_GEN_SRCS_B} ${PRJ_STUB_IMPL_SRCS_B})
 # sources C
 set(PRJ_CLIENT_SRCS_C src/C/${PRJ_NAME_CLIENT_C}.cpp ${PRJ_PROXY_GEN_SRCS_C})
 set(PRJ_SERVICE_SRCS_C src/C/${PRJ_NAME_SERVICE_C}.cpp src/C/MergedInterfaceStubImplC.cpp ${PRJ_STUB_GEN_SRCS_C} ${PRJ_STUB_IMPL_SRCS_C})
@@ -373,16 +404,18 @@ set(LINK_LIBRARIES -Wl,--as-needed CommonAPI CommonAPI-SomeIP)
 add_executable(${PRJ_NAME_CLIENT_A} ${PRJ_CLIENT_SRCS_A})
 target_link_libraries(${PRJ_NAME_CLIENT_A} ${LINK_LIBRARIES})
 # Build Client B
+
 add_executable(${PRJ_NAME_CLIENT_B} ${PRJ_CLIENT_SRCS_B})
 target_link_libraries(${PRJ_NAME_CLIENT_B} ${LINK_LIBRARIES})
 # Build Client C
 add_executable(${PRJ_NAME_CLIENT_C} ${PRJ_CLIENT_SRCS_C})
 target_link_libraries(${PRJ_NAME_CLIENT_C} ${LINK_LIBRARIES})
-
+message ("cccccccccccc ${PRJ_CLIENT_SRCS_C}" )
 # Build service A
 add_executable(${PRJ_NAME_SERVICE_A} ${PRJ_SERVICE_SRCS_A})
 target_link_libraries(${PRJ_NAME_SERVICE_A} ${LINK_LIBRARIES})
 # Build service B
+message ("sssssssssss ${PRJ_SERVICE_SRCS_B}" )
 add_executable(${PRJ_NAME_SERVICE_B} ${PRJ_SERVICE_SRCS_B})
 target_link_libraries(${PRJ_NAME_SERVICE_B} ${LINK_LIBRARIES})
 # Build service C
